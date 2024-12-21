@@ -45,8 +45,8 @@ export class AuthService {
       path: '/',
       expires: expiresRefreshToken,
     });
-    
-    return  {data: user };
+
+    return { data: user };
   }
 
   public async verifyUser(email: string, password: string) {
