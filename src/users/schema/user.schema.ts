@@ -11,7 +11,9 @@ export class User {
 
   @Prop()
   password: string;
-}
 
+  @Prop()
+  oAuthClient: string;
+}
 
 export const UserSchema = SchemaFactory.createForClass(User);

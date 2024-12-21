@@ -1,6 +1,22 @@
 services:
   mongo:
     image: mongo
+    container_name: Mongo_DB
     restart: always
     ports:
-      - 27017:27017 
+      - 27017:27017
+
+  redis:
+    image: redis
+    restart: always
+    container_name: redis
+    ports:
+      - 6379:6379
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379

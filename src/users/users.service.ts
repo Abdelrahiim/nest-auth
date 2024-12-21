@@ -3,17 +3,24 @@ import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
 import { User } from './schema/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
-import { hash, argon2id, verify } from 'argon2';
+import { CryptoService } from '../shared/utils/crypto.service';
+
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
+  constructor(
+    @InjectModel('User') private readonly userModel: Model<User>,
+    private readonly cryptoService: CryptoService,
+  ) {}
 
-  public async createUser(createUserDto: CreateUserDto) {
-    const hashedPassword = await this.hashPassword(createUserDto.password);
+  public async createUser(createUserDto: CreateUserDto, oAuthClient?: string) {
+    const hashedPassword = await this.cryptoService.hash(
+      createUserDto.password,
+    );
 
     const user = new this.userModel({
       ...createUserDto,
       password: hashedPassword,
+      oAuthClient,
     });
     const newUser = (await user.save()).toObject();
 
@@ -21,15 +28,20 @@ export class UsersService {
     return newUser;
   }
 
+  public async getOrCreateUser(data: CreateUserDto) {
+    const user = await this.userModel.findOne({ email: data.email });
+    if (user) {
+      delete user.password;
+      return user;
+    }
+    return this.createUser(data, 'google');
+  }
+
   public async getUser(query: FilterQuery<User>) {
-    const user = (await this.userModel.findOne(query)).toObject();
+    const user = await this.userModel.findOne(query);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return user;
-  }
-
-  private async hashPassword(password: string) {
-    return hash(password, { type: argon2id });
+    return user.toObject();
   }
 }
